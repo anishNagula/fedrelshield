@@ -293,7 +293,9 @@ class EnterpriseGraphGenerator:
         edge_index = torch.tensor(edge_index).t().contiguous()
 
         data = Data(
-            x=torch.tensor(node_features, dtype=torch.float),
+            x=torch.from_numpy(
+                np.array(node_features)
+            ).float(),
             edge_index=edge_index,
             edge_type=torch.tensor(edge_types),
             node_type=torch.tensor(node_types),
