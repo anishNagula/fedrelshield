@@ -1,3 +1,6 @@
+import random
+import torch
+import numpy as np
 from config import (
     enterprise_A_config,
     enterprise_B_config,
@@ -23,6 +26,11 @@ def run_enterprise(cfg):
     analyze_graph(graph, name=cfg.name)
 
     return graph, pyg_data
+
+
+torch.manual_seed(42)
+random.seed(42)
+np.random.seed(42)
 
 
 if __name__ == "__main__":
