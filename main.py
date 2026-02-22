@@ -1,13 +1,34 @@
-from config import enterprise_A_config
+from config import (
+    enterprise_A_config,
+    enterprise_B_config,
+    enterprise_C_config,
+)
 from generator import EnterpriseGraphGenerator
+from analysis import analyze_graph
 
 
-gen = EnterpriseGraphGenerator(enterprise_A_config)
+def run_enterprise(cfg):
+    print(f"\n\n######## {cfg.name} ########")
 
-graph = gen.generate()
-pyg_data = gen.to_pyg()
+    gen = EnterpriseGraphGenerator(cfg)
+    graph = gen.generate()
+    pyg_data = gen.to_pyg()
 
-print("Nodes:", graph.number_of_nodes())
-print("Edges:", graph.number_of_edges())
-print("Attack instances:", len(graph.graph["attack_instances"]))
-print("PyG Data:", pyg_data)
+    print("\nGraph Summary:")
+    print("Nodes:", graph.number_of_nodes())
+    print("Edges:", graph.number_of_edges())
+    print("Attack Instances:",
+          len(graph.graph["attack_instances"]))
+
+    analyze_graph(graph, name=cfg.name)
+
+    return graph, pyg_data
+
+
+if __name__ == "__main__":
+    for cfg in [
+        enterprise_A_config,
+        enterprise_B_config,
+        enterprise_C_config,
+    ]:
+        run_enterprise(cfg)
