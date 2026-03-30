@@ -31,7 +31,7 @@ def export_ultra_format():
     def write(file, data):
         with open(file, "w") as f:
             for h, r, t in data:
-                f.write(f"{h} {r} {t}\n")
+                f.write(f"{h}\t{r}\t{t}\n")   # ← FIXED
 
     write("train.txt", train)
     write("valid.txt", valid)
