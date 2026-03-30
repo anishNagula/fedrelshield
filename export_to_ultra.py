@@ -1,16 +1,25 @@
 import random
 from generator import EnterpriseGraphGenerator
-from config import enterprise_A_config  # you can change this
+from config import enterprise_A_config
 
 def export_ultra_format():
     gen = EnterpriseGraphGenerator(enterprise_A_config)
     graph = gen.generate()
 
     triplets = []
+    entities = set()
+    relations = set()
 
     for u, v, data in graph.edges(data=True):
-        relation = data["edge_type"]
-        triplets.append((str(u), relation, str(v)))
+        r = data["edge_type"]
+        triplets.append((str(u), r, str(v)))
+        entities.add(str(u))
+        entities.add(str(v))
+        relations.add(r)
+
+    # Create mappings
+    entity2id = {e: i for i, e in enumerate(sorted(entities))}
+    relation2id = {r: i for i, r in enumerate(sorted(relations))}
 
     random.shuffle(triplets)
 
@@ -28,7 +37,16 @@ def export_ultra_format():
     write("valid.txt", valid)
     write("test.txt", test)
 
-    print(f"Done. Total triplets: {n}")
+    # Write dicts
+    with open("entities.dict", "w") as f:
+        for e, i in entity2id.items():
+            f.write(f"{i}\t{e}\n")
+
+    with open("relations.dict", "w") as f:
+        for r, i in relation2id.items():
+            f.write(f"{i}\t{r}\n")
+
+    print("Export complete.")
 
 if __name__ == "__main__":
     export_ultra_format()
