@@ -7,7 +7,6 @@ from sklearn.metrics import (
     confusion_matrix,
 )
 
-from models import GraphSAGEModel
 
 
 def train(model, data, epochs=50, lr=0.01):
@@ -17,10 +16,13 @@ def train(model, data, epochs=50, lr=0.01):
     for epoch in range(epochs):
         optimizer.zero_grad()
 
-        logits = model(data.x, data.edge_index)
+        logits = model(data.x, data.edge_index, data.edge_type)
+        pos_weight = (len(data.y) - data.y.sum()) / data.y.sum()
+        
         loss = F.binary_cross_entropy_with_logits(
             logits,
             data.y.float(),
+            pos_weight=pos_weight
         )
 
         loss.backward()
@@ -33,9 +35,9 @@ def train(model, data, epochs=50, lr=0.01):
 def evaluate(model, data, name="Dataset"):
     model.eval()
     with torch.no_grad():
-        logits = model(data.x, data.edge_index)
+        logits = model(data.x, data.edge_index, data.edge_type)
         probs = torch.sigmoid(logits)
-        preds = (probs > 0.5).int()
+        preds = (probs > 0.2).int()
 
     y_true = data.y.cpu().numpy()
     y_pred = preds.cpu().numpy()

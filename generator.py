@@ -331,11 +331,29 @@ class EnterpriseGraphGenerator:
 
         for _, data in self.graph.nodes(data=True):
             feat = np.random.randn(self.config.feature_dimensions)
+            canonical_type = self.config.canonical_node_map[data["node_type"]]
+
+            # fixed global mapping
+            canonical_encoding = {
+                "User": 0,
+                "Host": 1,
+                "Process": 2,
+                "File": 3,
+                "Service": 4,
+                "Container": 5,
+                "DomainController": 6,
+            }
+
+            feat[0] = canonical_encoding[canonical_type] / len(canonical_encoding)
             node_features.append(feat)
             node_types.append(
                 self.node_type_encoding[data["node_type"]]
             )
             node_labels.append(data["attack_node"])
+
+        # ✅ GLOBAL NORMALIZATION (CRITICAL FIX)
+        x = np.array(node_features)
+        x = (x - x.mean()) / (x.std() + 1e-6)
 
         edge_index = []
         edge_types = []
@@ -351,10 +369,10 @@ class EnterpriseGraphGenerator:
         edge_index = torch.tensor(edge_index).t().contiguous()
 
         return Data(
-            x=torch.from_numpy(np.array(node_features)).float(),
+            x=torch.from_numpy(x).float(),   # ← use normalized features
             edge_index=edge_index,
             edge_type=torch.tensor(edge_types),
             node_type=torch.tensor(node_types),
             y=torch.tensor(node_labels),
             edge_label=torch.tensor(edge_labels),
-        )
+        ) 

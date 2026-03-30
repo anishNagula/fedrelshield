@@ -1,4 +1,5 @@
 import torch
+from models import RelGraphSAGE
 
 from config import (
     enterprise_A_config,
@@ -6,7 +7,6 @@ from config import (
     enterprise_C_config,
 )
 from generator import EnterpriseGraphGenerator
-from models import GraphSAGEModel
 from train import train, evaluate
 
 
@@ -24,13 +24,13 @@ if __name__ == "__main__":
     data_B = prepare_data(enterprise_B_config)
     data_C = prepare_data(enterprise_C_config)
 
-    model = GraphSAGEModel(
+    model = RelGraphSAGE(
         in_channels=data_A.num_node_features,
-        hidden_channels=64,
-    )
+        num_relations=len(torch.unique(data_A.edge_type)),
+    ) 
 
     print("\nTraining on Enterprise A...")
-    train(model, data_A, epochs=60)
+    train(model, data_A, epochs=100)
 
     evaluate(model, data_A, "Enterprise A (In-Domain)")
     evaluate(model, data_B, "Enterprise B (Cross-Domain)")
