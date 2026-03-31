@@ -185,14 +185,17 @@ class EnterpriseGraphGenerator:
         node_features = []
         node_labels = []
 
+        num_types = len(self.node_type_encoding)
+
         for _, data in self.graph.nodes(data=True):
             feat = np.zeros(self.config.feature_dimensions)
 
-            # 🔥 encode node type strongly
-            feat[0] = self.node_type_encoding[data["node_type"]] / len(self.node_type_encoding)
+            # ✅ One-hot node type
+            type_idx = self.node_type_encoding[data["node_type"]]
+            feat[type_idx] = 1.0
 
-            # 🔥 attack signal
-            feat[1] = data["attack_node"]
+            # ❌ REMOVE THIS (LABEL LEAK)
+            # feat[1] = data["attack_node"]
 
             node_features.append(feat)
             node_labels.append(data["attack_node"])

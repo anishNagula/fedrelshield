@@ -1,27 +1,65 @@
+import sys
 import torch
-from torch_geometric.data import Data
-from ultra.models import Ultra
+from types import SimpleNamespace
+
+sys.path.append("/home/sonic/ULTRA")
+
+from ultra import util
+
 
 class UltraEmbedder:
     def __init__(self, model_path, device="cpu"):
         self.device = device
 
-        self.model = Ultra(
+        cfg = SimpleNamespace()
+
+        cfg.model = SimpleNamespace()
+
+        cfg.model.entity_model = SimpleNamespace(
+            class_="EntityNBFNet",
             input_dim=64,
             hidden_dims=[64, 64, 64, 64, 64, 64],
-            relation_input_dim=64
-        ).to(device)
+            message_func="distmult",
+            aggregate_func="sum",
+            layer_norm=True,
+            short_cut=True
+        )
+
+        cfg.model.relation_model = SimpleNamespace(
+            class_="RelNBFNet",
+            input_dim=64,
+            hidden_dims=[64, 64, 64, 64, 64, 64],
+            message_func="distmult",
+            aggregate_func="sum",
+            layer_norm=True,
+            short_cut=True
+        )
+
+        cfg.train = SimpleNamespace()
+        cfg.train.gpus = None
+
+        self.model = util.build_model(cfg).to(device)
 
         state = torch.load(model_path, map_location=device)
         self.model.load_state_dict(state["model"], strict=False)
+
         self.model.eval()
 
-    def get_embeddings(self, data: Data):
+    def get_embeddings(self, data):
         data = data.to(self.device)
 
-        with torch.no_grad():
-            # ULTRA forward pass
-            node_emb = self.model.entity_model(data.x, data.edge_index, data.edge_type)
-        
-        return node_emb.cpu()
+        x = data.x
 
+        # ✅ Properly run through ALL entity_model layers
+        with torch.no_grad():
+            for layer in self.model.entity_model.layers:
+                x = layer(
+                    input=x,
+                    query=None,
+                    boundary=None,
+                    edge_index=data.edge_index,
+                    edge_type=data.edge_type,
+                    size=None
+                )
+
+        return x.cpu()
